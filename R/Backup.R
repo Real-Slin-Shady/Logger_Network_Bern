@@ -53,15 +53,15 @@ for (file in files) {
   for (x in 1:length(tables)) {
     if (substr(unique(tables[[x]]$topic),8,19) == substr(file,1,12)) {
         temp = read_csv(paste("data/",file,sep = ""),col_types = cols("T","T","T","c","c","c","d","d","T"))
-        print(x)
-        print(paste("Name live Table:",unique(tables[[x]]$topic)))
-        print(paste("Name file :",file))
-        print(paste("rows live Table:",nrow(tables[[x]])))
-        print(paste("rows file:",nrow(temp)))
+             print(x)
+            print(paste("Name live Table:",unique(tables[[x]]$topic)))
+            print(paste("Name file :",file))
+            print(paste("rows live Table:",nrow(tables[[x]])))
+            print(paste("rows file:",nrow(temp)))
         tables[[x]] <- bind_rows(temp,tables[[x]])
         tables[[x]] <- dplyr::distinct(tables[[x]],time, .keep_all= TRUE)
-        print(paste("rows added:",nrow(tables[[x]])-nrow(temp)))
-        cat(paste("rows combined :",nrow(tables[[x]]),"\n \n"))
+            print(paste("rows added:",nrow(tables[[x]])-nrow(temp)))
+            cat(paste("rows combined :",nrow(tables[[x]]),"\n \n"))
 
 
     }
