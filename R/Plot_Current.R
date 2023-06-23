@@ -1,5 +1,5 @@
 
-packages <- c("influxdbclient","ggplot2","tidyverse","lubridate","raster","dplyr")
+packages <- c("influxdbclient","ggplot2","tidyverse","lubridate","raster","dplyr","googledrive")
 
 source("./R/load_packages.R")
 load_packages(packages)
@@ -96,3 +96,5 @@ raster::plot(out, col = heat.colors(100))
 points(combined$LV_03_N,combined$LV_03_E , pch = 16)
 title(paste("R^2 = ",summary(model)$r.squared))
 dev.off()
+
+drive_upload(media = "./analysis/CurrentMap.tif", path = as_dribble("https://drive.google.com/drive/folders/1ZJqhB6zUb443ltvpOS-8tWQbX39M01bx"),overwrite = TRUE)
