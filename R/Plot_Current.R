@@ -1,15 +1,8 @@
 
-packages <- c("influxdbclient","ggplot2","tidyverse","lubridate")
+packages <- c("influxdbclient","ggplot2","tidyverse","lubridate","raster","dplyr")
 
-# Install packages not yet installed
-installed_packages <- packages %in% rownames(installed.packages())
-if (any(installed_packages == FALSE)) {
-  install.packages(packages[!installed_packages])
-}else{
-  print("All packages sucessfully installed")
-}
-
-invisible(lapply(packages, library, character.only = TRUE))
+source("./R/load_packages.R")
+load_packages(packages)
 
 
 # You can generate an API token from the "API Tokens Tab" in the UI
@@ -25,6 +18,7 @@ tables <- client$query('from(bucket: "smcs") |> range(start: 2023-05-01) |> filt
 
 currenttime <- Sys.time()
 laggingtime <- currenttime - lubridate::minutes(30)
+
 
 # test_tabel <- tables[[80]]
 # test_tabel$time <- with_tz(test_tabel$time,"Europe/Zurich")
@@ -61,8 +55,8 @@ combined <- combined |>
 combined <- combined |>
   inner_join(meta, by = "name")
 
-meta_LUR <- read_csv("./data/LUR_Test.csv") |>
-  select(-HuM)
+meta_LUR <- read_csv("./data/LUR_Test.csv")|>
+  dplyr::select(-HuM)
 
 combined <- combined |>
   inner_join(meta_LUR, by = "STANDORT")
@@ -71,9 +65,10 @@ combined <- combined |>
 #Dataframe to export (cleanup):
 
 correlators <- combined |>
-  select(-c(temperature,name,Diff_HoheZoll,Longitude,Latitude,Log_Nr_19,Doppel_Messnetz_23,BEFESTIGUNG,ZUSTAENDIG,Art,Log_NR,LV_03_E,LV_03_N,OST_CHTOPO,NORD_CHTOPO,Code_grafana,STANDORT_NEU,STANDORT)) |>
+  dplyr::select(-c(temperature,name,Diff_HoheZoll,Longitude,Latitude,Log_Nr_19,Doppel_Messnetz_23,BEFESTIGUNG,ZUSTAENDIG,Art,Log_NR,LV_03_E,LV_03_N,OST_CHTOPO,NORD_CHTOPO,Code_grafana,STANDORT_NEU,STANDORT)) |>
   colnames() |>
   paste(collapse  = "+")
+
 formula_local = as.formula(paste("temperature","~", correlators))
 
 model <- lm(formula_local, data = combined)
@@ -95,10 +90,9 @@ for (tiff in tiffs) {
 }
 
 
+tiff(filename = "analysis/CurrentMap.tif",width = 500, height = 500)
 
 raster::plot(out, col = heat.colors(100))
 points(combined$LV_03_N,combined$LV_03_E , pch = 16)
 title(paste("R^2 = ",summary(model)$r.squared))
-
-
-
+dev.off()
