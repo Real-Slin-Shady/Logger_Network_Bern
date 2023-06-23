@@ -61,7 +61,44 @@ combined <- combined |>
 combined <- combined |>
   inner_join(meta, by = "name")
 
+meta_LUR <- read_csv("./data/LUR_Test.csv") |>
+  select(-HuM)
+
+combined <- combined |>
+  inner_join(meta_LUR, by = "STANDORT")
+
+
 #Dataframe to export (cleanup):
 
-export <- combined |>
-  select(name, Temp = temperature, Longitude = NORD_CHTOPO, Latitude = OST_CHTOPO)
+correlators <- combined |>
+  select(-c(temperature,name,Diff_HoheZoll,Longitude,Latitude,Log_Nr_19,Doppel_Messnetz_23,BEFESTIGUNG,ZUSTAENDIG,Art,Log_NR,LV_03_E,LV_03_N,OST_CHTOPO,NORD_CHTOPO,Code_grafana,STANDORT_NEU,STANDORT)) |>
+  colnames() |>
+  paste(collapse  = "+")
+formula_local = as.formula(paste("temperature","~", correlators))
+
+model <- lm(formula_local, data = combined)
+
+tiff_names <- list.files("./data/Tiffs/")
+
+tiffs <- list()
+for(tiff in tiff_names){
+  print(tiff)
+tiffs[[tiff]] <- raster::raster(paste("./data/Tiffs/",tiff,sep = ""))
+coeff_temp <- unname(coefficients(model)[c(str_sub(tiff,end = -5))])
+tiffs[[tiff]] <- tiffs[[tiff]]*coeff_temp
+print(coeff_temp)
+}
+
+out = unname(coefficients(model)["(Intercept)"])
+for (tiff in tiffs) {
+  out = out + tiff
+}
+
+
+
+raster::plot(out, col = heat.colors(100))
+points(combined$LV_03_N,combined$LV_03_E , pch = 16)
+title(paste("R^2 = ",summary(model)$r.squared))
+
+
+
